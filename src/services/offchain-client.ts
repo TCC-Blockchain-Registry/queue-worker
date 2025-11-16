@@ -10,11 +10,6 @@ import {
   JobResult,
 } from '../types';
 
-/**
- * HTTP Client for Offchain API
- *
- * This service makes HTTP calls to the Offchain API to execute blockchain transactions
- */
 class OffchainClient {
   private client: AxiosInstance;
 
@@ -27,7 +22,6 @@ class OffchainClient {
       },
     });
 
-    // Request interceptor for logging
     this.client.interceptors.request.use(
       (config) => {
         console.log(`[Offchain API] ${config.method?.toUpperCase()} ${config.url}`);
@@ -39,7 +33,6 @@ class OffchainClient {
       }
     );
 
-    // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => {
         console.log(`[Offchain API] Response: ${response.status}`);
@@ -61,9 +54,6 @@ class OffchainClient {
     );
   }
 
-  /**
-   * Register a new property on the blockchain
-   */
   async registerProperty(payload: RegisterPropertyPayload): Promise<JobResult> {
     try {
       const response = await this.client.post('/api/properties/register', {
@@ -86,9 +76,6 @@ class OffchainClient {
     }
   }
 
-  /**
-   * Configure a property transfer with approvers
-   */
   async configureTransfer(payload: ConfigureTransferPayload): Promise<JobResult> {
     try {
       const response = await this.client.post('/api/transfers/configure', {
@@ -113,9 +100,6 @@ class OffchainClient {
     }
   }
 
-  /**
-   * Approve a transfer (called by each approver)
-   */
   async approveTransfer(payload: ApproveTransferPayload): Promise<JobResult> {
     try {
       const response = await this.client.post('/api/transfers/approve', {
@@ -138,9 +122,6 @@ class OffchainClient {
     }
   }
 
-  /**
-   * Buyer accepts the transfer
-   */
   async acceptTransfer(payload: AcceptTransferPayload): Promise<JobResult> {
     try {
       const response = await this.client.post('/api/transfers/accept', {
@@ -163,9 +144,6 @@ class OffchainClient {
     }
   }
 
-  /**
-   * Execute the final transfer
-   */
   async executeTransfer(payload: ExecuteTransferPayload): Promise<JobResult> {
     try {
       const response = await this.client.post('/api/transfers/execute', {
@@ -189,9 +167,6 @@ class OffchainClient {
     }
   }
 
-  /**
-   * Register a new approver entity
-   */
   async registerApprover(payload: RegisterApproverPayload): Promise<JobResult> {
     try {
       const response = await this.client.post('/api/approvers/register', {
@@ -214,9 +189,6 @@ class OffchainClient {
     }
   }
 
-  /**
-   * Freeze a property
-   */
   async freezeProperty(matriculaId: string, wallet: string): Promise<JobResult> {
     try {
       const response = await this.client.post('/api/admin/freeze-property', {
@@ -238,9 +210,6 @@ class OffchainClient {
     }
   }
 
-  /**
-   * Unfreeze a property
-   */
   async unfreezeProperty(matriculaId: string, wallet: string): Promise<JobResult> {
     try {
       const response = await this.client.post('/api/admin/unfreeze-property', {

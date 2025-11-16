@@ -4,12 +4,6 @@ import { logger } from '../utils/logger';
 import { delay, exponentialBackoff } from '../utils/delay';
 import { BlockchainJob, JobType, JobResult } from '../types';
 
-/**
- * Job Processor
- *
- * Processes blockchain jobs by calling the appropriate Offchain API endpoint
- * Implements retry logic with exponential backoff
- */
 export class JobProcessor {
   private stats = {
     totalProcessed: 0,
@@ -19,16 +13,12 @@ export class JobProcessor {
     startedAt: new Date().toISOString(),
   };
 
-  /**
-   * Process a blockchain job
-   */
   async processJob(job: BlockchainJob): Promise<JobResult> {
     const { id, type, payload, attempts = 0 } = job;
 
     logger.job(id, type, 'STARTED', `Attempt ${attempts + 1}`);
 
     try {
-      // Route to appropriate worker based on job type
       let result: JobResult;
 
       switch (type) {
@@ -74,38 +64,32 @@ export class JobProcessor {
           throw new Error(`Unknown job type: ${type}`);
       }
 
-      // Handle result
       if (result.success) {
         this.stats.successful++;
         this.stats.totalProcessed++;
         logger.job(id, type, 'COMPLETED', `TX: ${result.txHash}`);
         return result;
       } else {
-        // Job failed but didn't throw error
         throw new Error(result.error || 'Unknown error');
       }
     } catch (error: any) {
       logger.error(`Job ${id} failed:`, error.message);
 
-      // Check if we should retry
       const maxAttempts = job.maxAttempts || config.worker.maxRetryAttempts;
       const currentAttempt = attempts + 1;
 
       if (currentAttempt < maxAttempts) {
-        // Retry with exponential backoff
         this.stats.retried++;
         const delayMs = exponentialBackoff(currentAttempt, config.worker.retryDelayMs);
         logger.job(id, type, 'RETRY', `Will retry in ${delayMs}ms`);
 
         await delay(delayMs);
 
-        // Recursive retry
         return this.processJob({
           ...job,
           attempts: currentAttempt,
         });
       } else {
-        // Max retries exceeded
         this.stats.failed++;
         this.stats.totalProcessed++;
         logger.job(id, type, 'FAILED', `Max retries (${maxAttempts}) exceeded`);
@@ -118,9 +102,6 @@ export class JobProcessor {
     }
   }
 
-  /**
-   * Get worker statistics
-   */
   getStats() {
     return {
       ...this.stats,
@@ -128,9 +109,6 @@ export class JobProcessor {
     };
   }
 
-  /**
-   * Reset statistics
-   */
   resetStats() {
     this.stats = {
       totalProcessed: 0,

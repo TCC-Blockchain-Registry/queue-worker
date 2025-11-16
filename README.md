@@ -38,34 +38,53 @@ The worker processes these job types:
 7. **FREEZE_PROPERTY** - Freeze property (emergency)
 8. **UNFREEZE_PROPERTY** - Unfreeze property
 
-## Setup
+## Prerequisites
 
-### Prerequisites
 - Node.js 18+
+- npm or yarn
 - RabbitMQ running on port 5672
 - Offchain API running on port 3000
 
-### Installation
+## Quick Start
 
 ```bash
+# Clone repository
+git clone <repository-url>
+cd queue-worker
+
+# Install dependencies
 npm install
-```
 
-### Configuration
-
-Copy the example environment file:
-
-```bash
+# Copy environment template
 cp .env.example .env
+# Edit .env with your configuration (see Environment Variables section)
+
+# Run in development mode
+npm run dev
 ```
 
-Edit `.env`:
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
 
 ```env
+# RabbitMQ Configuration
 RABBITMQ_URL=amqp://admin:admin123@localhost:5672
 QUEUE_NAME=blockchain-jobs
+DEAD_LETTER_QUEUE=blockchain-jobs-dlq
+PREFETCH_COUNT=1
+
+# Offchain API Configuration
 OFFCHAIN_API_URL=http://localhost:3000
+OFFCHAIN_API_TIMEOUT=120000
+
+# Worker Configuration
 MAX_RETRY_ATTEMPTS=3
+RETRY_DELAY_MS=5000
+NODE_ENV=development
+
+# Logging
+LOG_LEVEL=info
 ```
 
 ## Development
@@ -219,26 +238,88 @@ RabbitMQ will distribute jobs across all workers using round-robin.
 | RETRY_DELAY_MS | 5000 | Base retry delay |
 | LOG_LEVEL | info | Logging level |
 
+## Health Check
+
+The worker doesn't expose an HTTP endpoint. Monitor health by checking:
+
+```bash
+# Check worker logs
+npm run dev
+
+# Check RabbitMQ queue
+docker exec rabbitmq-property rabbitmqctl list_queues name messages consumers
+
+# Expected output shows consumers connected
+blockchain-jobs  0  1
+```
+
 ## Troubleshooting
 
-**"Failed to connect to RabbitMQ"**
-- Ensure RabbitMQ is running: `docker ps`
-- Check connection URL in `.env`
-- Verify credentials (admin/admin123)
+### Failed to Connect to RabbitMQ
 
-**"Offchain service is unavailable"**
-- Ensure Offchain API is running on port 3000
-- Check `OFFCHAIN_API_URL` in `.env`
+**Problem**: `Error: connect ECONNREFUSED`
 
-**Jobs stuck in queue**
-- Check worker logs for errors
-- Verify Offchain API is responding
+**Solution**:
+- Ensure RabbitMQ is running: `docker ps | grep rabbitmq`
+- Check connection URL in `.env` matches RabbitMQ configuration
+- Verify credentials (default: admin/admin123)
 - Check RabbitMQ Management UI: http://localhost:15672
 
-**High retry rate**
-- Check blockchain node is running (Besu)
-- Verify contract addresses in Offchain API
-- Check gas settings
+### Offchain Service Unavailable
+
+**Problem**: `Offchain service is unavailable`
+
+**Solution**:
+- Ensure Offchain API is running: `curl http://localhost:3000/health`
+- Check `OFFCHAIN_API_URL` in `.env`
+- Verify blockchain network (Besu) is running
+- Check Offchain API logs for errors
+
+### Jobs Stuck in Queue
+
+**Problem**: Messages accumulating in queue but not processed
+
+**Solution**:
+1. Check worker is running and consuming: `docker exec rabbitmq-property rabbitmqctl list_queues name consumers`
+2. Verify consumer count is > 0
+3. Check worker logs for errors
+4. Verify Offchain API is accessible and responding
+5. Check dead letter queue for failed jobs
+
+### High Retry Rate
+
+**Problem**: Jobs repeatedly failing and retrying
+
+**Solution**:
+- Check blockchain node (Besu) is running and synced
+- Verify contract addresses in Offchain API `.env`
+- Check wallet has sufficient ETH for gas
+- Verify wallet has required roles on contracts
+- Check contract is not paused
+
+### Dead Letter Queue Full
+
+**Problem**: Many jobs in `blockchain-jobs-dlq`
+
+**Solution**:
+1. Access RabbitMQ Management UI: http://localhost:15672
+2. Inspect DLQ messages to identify common errors
+3. Fix root cause (contract addresses, roles, etc.)
+4. Manually reprocess or purge DLQ:
+```bash
+# Purge dead letter queue (WARNING: deletes messages)
+docker exec rabbitmq-property rabbitmqctl purge_queue blockchain-jobs-dlq
+```
+
+### Worker Crashes on Startup
+
+**Problem**: Worker exits immediately after starting
+
+**Solution**:
+- Check `.env` file exists with required variables
+- Verify RabbitMQ is accessible
+- Check for syntax errors in code
+- Review startup logs for stack trace
 
 ## Architecture Notes
 
@@ -254,3 +335,7 @@ For production:
 - Monitor dead letter queue regularly
 - Set up alerts for high failure rates
 - Use persistent queues (already configured)
+
+## License
+
+MIT

@@ -16,15 +16,12 @@ export class QueueConsumer {
       this.connection = await amqp.connect(config.rabbitmq.url);
       this.channel = await this.connection.createChannel();
 
-      // Set prefetch count (number of unacknowledged messages)
       await this.channel.prefetch(config.rabbitmq.prefetchCount);
 
-      // Assert main queue
       await this.channel.assertQueue(config.rabbitmq.queueName, {
-        durable: true, // Queue survives broker restart
+        durable: true,
       });
 
-      // Assert dead letter queue
       await this.channel.assertQueue(config.rabbitmq.deadLetterQueue, {
         durable: true,
       });
@@ -32,7 +29,6 @@ export class QueueConsumer {
       this.isConnected = true;
       logger.info('Connected to RabbitMQ successfully');
 
-      // Handle connection events
       this.connection!.on('error', (err) => {
         logger.error('RabbitMQ connection error:', err.message);
         this.isConnected = false;
@@ -41,12 +37,10 @@ export class QueueConsumer {
       this.connection!.on('close', () => {
         logger.warn('RabbitMQ connection closed');
         this.isConnected = false;
-        // Attempt to reconnect after 5 seconds
         setTimeout(() => this.connect(), 5000);
       });
     } catch (error: any) {
       logger.error('Failed to connect to RabbitMQ:', error.message);
-      // Retry connection after 5 seconds
       setTimeout(() => this.connect(), 5000);
     }
   }
@@ -69,7 +63,7 @@ export class QueueConsumer {
         await this.handleMessage(msg);
       },
       {
-        noAck: false, // Manual acknowledgment
+        noAck: false,
       }
     );
 
@@ -80,7 +74,6 @@ export class QueueConsumer {
     if (!this.channel) return;
 
     try {
-      // Parse job from message
       const job: BlockchainJob = JSON.parse(msg.content.toString());
 
       logger.debug('Received job:', {
@@ -88,25 +81,20 @@ export class QueueConsumer {
         type: job.type,
       });
 
-      // Process the job
       const result = await jobProcessor.processJob(job);
 
       if (result.success) {
-        // Acknowledge message (remove from queue)
         this.channel.ack(msg);
         logger.debug(`Job ${job.id} acknowledged`);
       } else {
-        // Job failed after all retries - send to dead letter queue
         this.channel.nack(msg, false, false);
         logger.warn(`Job ${job.id} sent to dead letter queue`);
 
-        // Optionally publish to dead letter queue with additional info
         await this.sendToDeadLetterQueue(job, result.error);
       }
     } catch (error: any) {
       logger.error('Error handling message:', error.message);
 
-      // Reject message and requeue for retry
       this.channel.nack(msg, false, true);
     }
   }
