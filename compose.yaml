@@ -8,43 +8,14 @@ services:
       - NODE_ENV=production
     env_file:
       - .env
-    networks:
-      - worker-network
     restart: unless-stopped
-    depends_on:
-      - rabbitmq
     deploy:
       restart_policy:
         condition: on-failure
         delay: 5s
         max_attempts: 3
 
-  rabbitmq:
-    image: rabbitmq:3.12-management-alpine
-    container_name: queue-rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=admin123
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-      - rabbitmq_logs:/var/log/rabbitmq
-    networks:
-      - worker-network
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    restart: unless-stopped
-
 networks:
-  worker-network:
-    driver: bridge
-
-volumes:
-  rabbitmq_data:
-  rabbitmq_logs:
+  default:
+    name: property-network
+    external: true
