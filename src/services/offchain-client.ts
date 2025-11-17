@@ -58,10 +58,16 @@ class OffchainClient {
       // Enviar payload diretamente para a API
       const response = await this.client.post('/api/properties/register', payload);
 
+      // V2: Sistema de aprovações manuais retorna requestHash, txHash, status, etc
+      const responseData = response.data.data || response.data;
+      
       return {
         success: true,
-        txHash: response.data.data?.issueTxHash || response.data.txHash,
-        message: 'Property registered successfully',
+        txHash: responseData.txHash || responseData.issueTxHash || response.data.txHash,
+        requestHash: responseData.requestHash,
+        blockNumber: responseData.blockNumber,
+        status: responseData.status,
+        message: 'Property registration request created successfully',
         data: response.data,
       };
     } catch (error: any) {

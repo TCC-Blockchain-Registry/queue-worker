@@ -92,6 +92,9 @@ export interface RegisterApproverPayload {
 export interface JobResult {
   success: boolean;
   txHash?: string;
+  requestHash?: string;  // V2 approval system request hash
+  blockNumber?: number;
+  status?: string;  // PENDING_APPROVALS, EXECUTED, etc
   message?: string;
   error?: string;
   data?: any;

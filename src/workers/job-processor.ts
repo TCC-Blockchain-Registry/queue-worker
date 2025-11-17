@@ -72,7 +72,7 @@ export class JobProcessor {
         
         // Send webhook callback to orchestrator
         if (result.txHash) {
-          await this.sendWebhookCallback(type, payload, result.txHash, id);
+          await this.sendWebhookCallback(type, payload, result, id);
         }
         
         return result;
@@ -112,7 +112,7 @@ export class JobProcessor {
   private async sendWebhookCallback(
     jobType: JobType,
     payload: any,
-    txHash: string,
+    result: any,
     jobId: string
   ): Promise<void> {
     try {
@@ -122,7 +122,10 @@ export class JobProcessor {
         await orchestratorWebhook.updatePropertyBlockchainTx(
           payload.propertyId,
           {
-            transactionHash: txHash,
+            transactionHash: result.txHash,
+            requestHash: result.requestHash,  // V2 approval system
+            blockNumber: result.blockNumber,
+            approvalStatus: result.status || 'PENDING_APPROVALS',
             jobId: jobId,
             status: 'SUCCESS',
           }

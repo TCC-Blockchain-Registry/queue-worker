@@ -3,9 +3,11 @@ import { logger } from '../utils/logger';
 
 export interface WebhookUpdatePayload {
   transactionHash: string;
+  requestHash?: string;  // V2 approval system request hash
   blockNumber?: number;
   jobId: string;
   status: 'SUCCESS' | 'FAILED';
+  approvalStatus?: string;  // PENDING_APPROVALS, EXECUTED
 }
 
 class OrchestratorWebhook {
