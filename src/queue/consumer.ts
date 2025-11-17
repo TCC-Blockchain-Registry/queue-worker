@@ -55,6 +55,11 @@ export class QueueConsumer {
     await this.channel.consume(
       config.rabbitmq.queueName,
       async (msg: amqp.ConsumeMessage | null) => {
+        console.log('[DEBUG] Message received from queue!', {
+          hasMessage: !!msg,
+          messageSize: msg?.content?.length,
+        });
+        
         if (!msg) {
           logger.warn('Received null message');
           return;
@@ -71,28 +76,42 @@ export class QueueConsumer {
   }
 
   private async handleMessage(msg: amqp.ConsumeMessage): Promise<void> {
-    if (!this.channel) return;
+    console.log('[DEBUG] handleMessage called');
+    if (!this.channel) {
+      console.log('[DEBUG] No channel, returning');
+      return;
+    }
 
     try {
+      console.log('[DEBUG] Parsing message content...');
       const job: BlockchainJob = JSON.parse(msg.content.toString());
 
-      logger.debug('Received job:', {
+      console.log('[DEBUG] Message parsed successfully:', {
         id: job.id,
         type: job.type,
       });
 
+      logger.info('📥 Received job:', {
+        id: job.id,
+        type: job.type,
+      });
+
+      console.log('[DEBUG] Processing job...');
       const result = await jobProcessor.processJob(job);
+
+      console.log('[DEBUG] Job processed:', { success: result.success });
 
       if (result.success) {
         this.channel.ack(msg);
-        logger.debug(`Job ${job.id} acknowledged`);
+        logger.info(`✅ Job ${job.id} acknowledged`);
       } else {
         this.channel.nack(msg, false, false);
-        logger.warn(`Job ${job.id} sent to dead letter queue`);
+        logger.warn(`❌ Job ${job.id} sent to dead letter queue`);
 
         await this.sendToDeadLetterQueue(job, result.error);
       }
     } catch (error: any) {
+      console.error('[DEBUG] Error in handleMessage:', error);
       logger.error('Error handling message:', error.message);
 
       this.channel.nack(msg, false, true);

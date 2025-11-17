@@ -1,4 +1,5 @@
 import { offchainClient } from '../services/offchain-client';
+import { orchestratorWebhook } from '../services/orchestrator-webhook';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 import { delay, exponentialBackoff } from '../utils/delay';
@@ -68,6 +69,12 @@ export class JobProcessor {
         this.stats.successful++;
         this.stats.totalProcessed++;
         logger.job(id, type, 'COMPLETED', `TX: ${result.txHash}`);
+        
+        // Send webhook callback to orchestrator
+        if (result.txHash) {
+          await this.sendWebhookCallback(type, payload, result.txHash, id);
+        }
+        
         return result;
       } else {
         throw new Error(result.error || 'Unknown error');
@@ -99,6 +106,37 @@ export class JobProcessor {
           error: error.message,
         };
       }
+    }
+  }
+
+  private async sendWebhookCallback(
+    jobType: JobType,
+    payload: any,
+    txHash: string,
+    jobId: string
+  ): Promise<void> {
+    try {
+      // Only send webhook for property registration for now
+      // Can be extended for transfers and other operations
+      if (jobType === JobType.REGISTER_PROPERTY && payload.propertyId) {
+        await orchestratorWebhook.updatePropertyBlockchainTx(
+          payload.propertyId,
+          {
+            transactionHash: txHash,
+            jobId: jobId,
+            status: 'SUCCESS',
+          }
+        );
+      }
+      // TODO: Add webhook support for transfers
+      // if (jobType === JobType.CONFIGURE_TRANSFER && payload.transferId) { ... }
+    } catch (error: any) {
+      // Log but don't fail the job if webhook fails
+      logger.error(`Webhook callback failed:`, {
+        jobType,
+        jobId,
+        error: error.message,
+      });
     }
   }
 

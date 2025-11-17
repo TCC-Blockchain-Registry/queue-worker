@@ -1,7 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { config } from '../config';
 import {
-  RegisterPropertyPayload,
   ConfigureTransferPayload,
   ApproveTransferPayload,
   AcceptTransferPayload,
@@ -54,24 +53,21 @@ class OffchainClient {
     );
   }
 
-  async registerProperty(payload: RegisterPropertyPayload): Promise<JobResult> {
+  async registerProperty(payload: any): Promise<JobResult> {
     try {
-      const response = await this.client.post('/api/properties/register', {
-        matriculaId: payload.matriculaId,
-        ownerWallet: payload.ownerWallet,
-        metadata: payload.metadata,
-      });
+      // Enviar payload diretamente para a API
+      const response = await this.client.post('/api/properties/register', payload);
 
       return {
         success: true,
-        txHash: response.data.txHash,
+        txHash: response.data.data?.issueTxHash || response.data.txHash,
         message: 'Property registered successfully',
         data: response.data,
       };
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message,
+        error: error.response?.data?.error || error.response?.data?.message || error.message,
       };
     }
   }
