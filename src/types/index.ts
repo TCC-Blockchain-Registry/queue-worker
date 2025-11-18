@@ -56,6 +56,9 @@ export interface ApproveTransferPayload {
   transferId: string;
   matriculaId: string;
   approverAddress: string;
+  // ✅ CORREÇÃO: Adicionar from/to necessários para Offchain API
+  from: string;  // Endereço do vendedor/proprietário atual
+  to: string;    // Endereço do comprador/novo proprietário
 }
 
 /**
@@ -93,6 +96,7 @@ export interface JobResult {
   success: boolean;
   txHash?: string;
   requestHash?: string;  // V2 approval system request hash
+  transferId?: string;   // Transfer ID for transfer operations
   blockNumber?: number;
   status?: string;  // PENDING_APPROVALS, EXECUTED, etc
   message?: string;

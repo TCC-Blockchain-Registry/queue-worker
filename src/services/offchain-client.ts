@@ -81,23 +81,24 @@ class OffchainClient {
   async configureTransfer(payload: ConfigureTransferPayload): Promise<JobResult> {
     try {
       const response = await this.client.post('/api/transfers/configure', {
-        transferId: payload.transferId,
+        // ✅ CORREÇÃO: Usar 'from' e 'to' ao invés de 'seller' e 'buyer'
+        from: payload.seller,  // Vendedor = from
+        to: payload.buyer,      // Comprador = to
         matriculaId: payload.matriculaId,
-        seller: payload.seller,
-        buyer: payload.buyer,
         approvers: payload.approvers,
       });
 
       return {
         success: true,
-        txHash: response.data.txHash,
+        txHash: response.data.data?.txHash || response.data.txHash,
+        transferId: payload.transferId, // Preservar transferId para webhook
         message: 'Transfer configured successfully',
         data: response.data,
       };
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message,
+        error: error.response?.data?.error || error.response?.data?.message || error.message,
       };
     }
   }
@@ -105,9 +106,13 @@ class OffchainClient {
   async approveTransfer(payload: ApproveTransferPayload): Promise<JobResult> {
     try {
       const response = await this.client.post('/api/transfers/approve', {
-        transferId: payload.transferId,
+        // ✅ CORREÇÃO: Adicionar from/to necessários para Offchain API
+        from: payload.from,
+        to: payload.to,
         matriculaId: payload.matriculaId,
         approverAddress: payload.approverAddress,
+        // ⚠️  NOTA: approverPrivateKey deve ser obtido localmente pelo Offchain API,
+        // não deve ser transmitido via HTTP por segurança
       });
 
       return {
