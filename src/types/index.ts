@@ -4,12 +4,6 @@
 export enum JobType {
   REGISTER_PROPERTY = 'REGISTER_PROPERTY',
   CONFIGURE_TRANSFER = 'CONFIGURE_TRANSFER',
-  APPROVE_TRANSFER = 'APPROVE_TRANSFER',
-  ACCEPT_TRANSFER = 'ACCEPT_TRANSFER',
-  EXECUTE_TRANSFER = 'EXECUTE_TRANSFER',
-  REGISTER_APPROVER = 'REGISTER_APPROVER',
-  FREEZE_PROPERTY = 'FREEZE_PROPERTY',
-  UNFREEZE_PROPERTY = 'UNFREEZE_PROPERTY',
 }
 
 /**
@@ -46,47 +40,6 @@ export interface ConfigureTransferPayload {
   matriculaId: string;
   seller: string;
   buyer: string;
-  approvers: string[];
-}
-
-/**
- * Approve Transfer Job Payload
- */
-export interface ApproveTransferPayload {
-  transferId: string;
-  matriculaId: string;
-  approverAddress: string;
-  // ✅ CORREÇÃO: Adicionar from/to necessários para Offchain API
-  from: string;  // Endereço do vendedor/proprietário atual
-  to: string;    // Endereço do comprador/novo proprietário
-}
-
-/**
- * Accept Transfer Job Payload
- */
-export interface AcceptTransferPayload {
-  transferId: string;
-  matriculaId: string;
-  buyerAddress: string;
-}
-
-/**
- * Execute Transfer Job Payload
- */
-export interface ExecuteTransferPayload {
-  transferId: string;
-  matriculaId: string;
-  seller: string;
-  buyer: string;
-}
-
-/**
- * Register Approver Job Payload
- */
-export interface RegisterApproverPayload {
-  name: string;
-  walletAddress: string;
-  entityType: string;
 }
 
 /**

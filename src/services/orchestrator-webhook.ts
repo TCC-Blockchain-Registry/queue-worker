@@ -12,9 +12,11 @@ export interface WebhookUpdatePayload {
 
 class OrchestratorWebhook {
   private readonly baseUrl: string;
+  private readonly apiKey: string;
 
   constructor() {
     this.baseUrl = process.env.ORCHESTRATOR_URL || 'http://core-orchestrator-app:8080';
+    this.apiKey = process.env.WEBHOOK_API_KEY || 'development-webhook-key-12345';
   }
 
   /**
@@ -37,6 +39,7 @@ class OrchestratorWebhook {
       await axios.patch(url, payload, {
         headers: {
           'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
         },
         timeout: 10000, // 10 seconds
       });
@@ -83,6 +86,7 @@ class OrchestratorWebhook {
       await axios.patch(url, payload, {
         headers: {
           'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
         },
         timeout: 10000,
       });

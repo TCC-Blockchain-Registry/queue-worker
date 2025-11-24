@@ -2,10 +2,6 @@ import axios, { AxiosInstance } from 'axios';
 import { config } from '../config';
 import {
   ConfigureTransferPayload,
-  ApproveTransferPayload,
-  AcceptTransferPayload,
-  ExecuteTransferPayload,
-  RegisterApproverPayload,
   JobResult,
 } from '../types';
 
@@ -80,12 +76,10 @@ class OffchainClient {
 
   async configureTransfer(payload: ConfigureTransferPayload): Promise<JobResult> {
     try {
-      const response = await this.client.post('/api/transfers/configure', {
-        // ✅ CORREÇÃO: Usar 'from' e 'to' ao invés de 'seller' e 'buyer'
-        from: payload.seller,  // Vendedor = from
-        to: payload.buyer,      // Comprador = to
+      const response = await this.client.post('/api/transfers/request', {
+        from: payload.seller,
+        to: payload.buyer,
         matriculaId: payload.matriculaId,
-        approvers: payload.approvers,
       });
 
       return {
@@ -99,141 +93,6 @@ class OffchainClient {
       return {
         success: false,
         error: error.response?.data?.error || error.response?.data?.message || error.message,
-      };
-    }
-  }
-
-  async approveTransfer(payload: ApproveTransferPayload): Promise<JobResult> {
-    try {
-      const response = await this.client.post('/api/transfers/approve', {
-        // ✅ CORREÇÃO: Adicionar from/to necessários para Offchain API
-        from: payload.from,
-        to: payload.to,
-        matriculaId: payload.matriculaId,
-        approverAddress: payload.approverAddress,
-        // ⚠️  NOTA: approverPrivateKey deve ser obtido localmente pelo Offchain API,
-        // não deve ser transmitido via HTTP por segurança
-      });
-
-      return {
-        success: true,
-        txHash: response.data.txHash,
-        message: 'Transfer approved successfully',
-        data: response.data,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.message || error.message,
-      };
-    }
-  }
-
-  async acceptTransfer(payload: AcceptTransferPayload): Promise<JobResult> {
-    try {
-      const response = await this.client.post('/api/transfers/accept', {
-        transferId: payload.transferId,
-        matriculaId: payload.matriculaId,
-        buyerAddress: payload.buyerAddress,
-      });
-
-      return {
-        success: true,
-        txHash: response.data.txHash,
-        message: 'Transfer accepted successfully',
-        data: response.data,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.message || error.message,
-      };
-    }
-  }
-
-  async executeTransfer(payload: ExecuteTransferPayload): Promise<JobResult> {
-    try {
-      const response = await this.client.post('/api/transfers/execute', {
-        transferId: payload.transferId,
-        matriculaId: payload.matriculaId,
-        seller: payload.seller,
-        buyer: payload.buyer,
-      });
-
-      return {
-        success: true,
-        txHash: response.data.txHash,
-        message: 'Transfer executed successfully',
-        data: response.data,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.message || error.message,
-      };
-    }
-  }
-
-  async registerApprover(payload: RegisterApproverPayload): Promise<JobResult> {
-    try {
-      const response = await this.client.post('/api/approvers/register', {
-        name: payload.name,
-        walletAddress: payload.walletAddress,
-        entityType: payload.entityType,
-      });
-
-      return {
-        success: true,
-        txHash: response.data.txHash,
-        message: 'Approver registered successfully',
-        data: response.data,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.message || error.message,
-      };
-    }
-  }
-
-  async freezeProperty(matriculaId: string, wallet: string): Promise<JobResult> {
-    try {
-      const response = await this.client.post('/api/admin/freeze-property', {
-        matriculaId,
-        wallet,
-      });
-
-      return {
-        success: true,
-        txHash: response.data.txHash,
-        message: 'Property frozen successfully',
-        data: response.data,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.message || error.message,
-      };
-    }
-  }
-
-  async unfreezeProperty(matriculaId: string, wallet: string): Promise<JobResult> {
-    try {
-      const response = await this.client.post('/api/admin/unfreeze-property', {
-        matriculaId,
-        wallet,
-      });
-
-      return {
-        success: true,
-        txHash: response.data.txHash,
-        message: 'Property unfrozen successfully',
-        data: response.data,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.message || error.message,
       };
     }
   }

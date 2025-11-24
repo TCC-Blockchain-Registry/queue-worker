@@ -1,5 +1,6 @@
 services:
   queue-worker:
+    image: queue-worker
     build:
       context: .
       dockerfile: Dockerfile

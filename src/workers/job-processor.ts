@@ -31,36 +31,6 @@ export class JobProcessor {
           result = await offchainClient.configureTransfer(payload);
           break;
 
-        case JobType.APPROVE_TRANSFER:
-          result = await offchainClient.approveTransfer(payload);
-          break;
-
-        case JobType.ACCEPT_TRANSFER:
-          result = await offchainClient.acceptTransfer(payload);
-          break;
-
-        case JobType.EXECUTE_TRANSFER:
-          result = await offchainClient.executeTransfer(payload);
-          break;
-
-        case JobType.REGISTER_APPROVER:
-          result = await offchainClient.registerApprover(payload);
-          break;
-
-        case JobType.FREEZE_PROPERTY:
-          result = await offchainClient.freezeProperty(
-            payload.matriculaId,
-            payload.wallet
-          );
-          break;
-
-        case JobType.UNFREEZE_PROPERTY:
-          result = await offchainClient.unfreezeProperty(
-            payload.matriculaId,
-            payload.wallet
-          );
-          break;
-
         default:
           throw new Error(`Unknown job type: ${type}`);
       }
